@@ -1,0 +1,16 @@
+<resources>
+    <string name="why_location">Location permissions are required to return your location to others</string>
+    <string name="why_sms">SMS permissions are required to read and send text messages</string>
+    <string name="why_phone">Phone permissions are required to read incoming text messages</string>
+
+    <string name="app_name">WhereU</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

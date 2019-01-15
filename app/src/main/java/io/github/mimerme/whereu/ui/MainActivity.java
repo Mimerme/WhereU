@@ -2,8 +2,12 @@ package io.github.mimerme.whereu.ui;
 
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -24,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.Manifest;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -32,6 +37,8 @@ import io.github.mimerme.whereu.R;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private static SmsManager smsManager = SmsManager.getDefault();
+    private FloatingActionButton mFab;
+    private final int CONTACT_PICK_CODE = 69;
 
     public static void sendSms(String target, String message){
         smsManager.sendTextMessage(target, null,
@@ -44,15 +51,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -69,6 +67,43 @@ public class MainActivity extends AppCompatActivity
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .commit();
 
+        //Configure the floating action button
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), "Choose a number to add to the whitelist", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+                startActivityForResult(intent, CONTACT_PICK_CODE);
+            }
+        });
+
+    }
+
+    @Override
+    public void onActivityResult (int requestCode,
+                                     int resultCode,
+                                     Intent data){
+        switch(requestCode){
+            case CONTACT_PICK_CODE:
+                String phoneNo = null;
+
+                if(data == null)
+                    return;
+
+                Uri uri = data.getData();
+                Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+
+                if (cursor.moveToFirst()) {
+                    int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                    phoneNo = cursor.getString(phoneIndex);
+                }
+
+                cursor.close();
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
@@ -138,16 +173,19 @@ public class MainActivity extends AppCompatActivity
                 manager.beginTransaction().replace(R.id.fragment_container, new WhitelistFragment())
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
+                mFab.show();
                 break;
             case R.id.nav_debug:
                 manager.beginTransaction().replace(R.id.fragment_container, new LogFragment())
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
+                mFab.hide();
                 break;
             case R.id.nav_help:
                 manager.beginTransaction().replace(R.id.fragment_container, new HelpFragment())
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
+                mFab.hide();
                 break;
         }
 

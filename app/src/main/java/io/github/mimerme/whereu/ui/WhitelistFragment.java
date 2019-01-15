@@ -88,7 +88,7 @@ public class WhitelistFragment extends Fragment {
         WhitelistAdapater ad = new WhitelistAdapater();
         rv.setAdapter(ad);
 
-        new ItemTouchHelper(new WhitelistAdapater.WhitelistTouchCallback(0, ItemTouchHelper.LEFT)).attachToRecyclerView(rv);
+        new ItemTouchHelper(new WhitelistAdapater.WhitelistTouchCallback(0, ItemTouchHelper.LEFT, ad, getContext())).attachToRecyclerView(rv);
 
 
         return view;

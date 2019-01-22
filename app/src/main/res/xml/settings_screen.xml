@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Core Functionality">
+
+    </PreferenceCategory>
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="whitelist_enable"
+        android:summary="If disabled anyone can ask for your current location at any given time"
+        android:title="Enable Whitelist" />
+    <ListPreference
+        android:defaultValue="1"
+        android:entries="@array/list_location_methods"
+        android:entryValues="@array/list_location_methods"
+        android:key="location_preference"
+        android:summary="How the app should get your location"
+        android:title="Location Tracking Method" />
+</PreferenceScreen>

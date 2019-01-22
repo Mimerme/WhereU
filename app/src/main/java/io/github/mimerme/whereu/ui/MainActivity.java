@@ -1,6 +1,8 @@
 package io.github.mimerme.whereu.ui;
 
+import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,9 +16,13 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.preference.PreferenceFragment;
 import android.support.v7.app.AlertDialog;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -27,18 +33,57 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.Manifest;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.io.IOException;
 
 import io.github.mimerme.whereu.R;
+import io.github.mimerme.whereu.utility.AndroidStorage;
+import io.github.mimerme.whereu.utility.Storage;
+import io.github.mimerme.whereu.utility.Utility;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    public static class PrefsFragment extends PreferenceFragment{
+        @Override
+        public void onCreate(Bundle savedInstanceState){
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.settings_screen);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View v = super.onCreateView(inflater, container, savedInstanceState);
+            if(v != null) {
+                ListView lv = (ListView) v.findViewById(android.R.id.list);
+                lv.setPadding(0, 0, 0, 0);
+            }
+            return v;
+        }
+    }
+
+
+    public static Storage WHITELIST_STORAGE = null;
+    //Settings storage is used for configurations saved for the SmsReceiver
+    public static Storage SETTINGS_STORAGE = null;
+
     private static SmsManager smsManager = SmsManager.getDefault();
+    public static TelephonyManager telManager;
+
     private FloatingActionButton mFab;
     private final int CONTACT_PICK_CODE = 69;
+
+    private WhitelistFragment fWhitelist;
+    private PreferenceFragment fPrefs;
+
+    private static TelephonyManager getDefaultTelephonyManager(Context c){
+        return (TelephonyManager)c.getSystemService(Context.TELEPHONY_SERVICE);
+    }
 
     public static void sendSms(String target, String message){
         smsManager.sendTextMessage(target, null,
@@ -48,6 +93,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Initialize the telephony manager to be static
+        telManager = getDefaultTelephonyManager(this);
+
+        //Initialize the storages
+        MainActivity.WHITELIST_STORAGE = new AndroidStorage(this, "whitelist");
+        MainActivity.SETTINGS_STORAGE = new AndroidStorage(this, "settings");
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -61,9 +114,13 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        //Initialize the fragments
+        fWhitelist = new WhitelistFragment();
+        fPrefs = new PrefsFragment();
+
         //Have to add fragments programatically since static fragments are perminenet
         //This declares the first shown fragment
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new WhitelistFragment())
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fWhitelist)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .commit();
 
@@ -87,7 +144,9 @@ public class MainActivity extends AppCompatActivity
         switch(requestCode){
             case CONTACT_PICK_CODE:
                 String phoneNo = null;
+                String displayName = null;
 
+                //If the data is null that means nothing was selected
                 if(data == null)
                     return;
 
@@ -96,10 +155,24 @@ public class MainActivity extends AppCompatActivity
 
                 if (cursor.moveToFirst()) {
                     int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                    int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                     phoneNo = cursor.getString(phoneIndex);
-                }
+                    phoneNo = Utility.formatNumber(phoneNo);
+                    //For consistancy's sake always include a country code if the number doesn't have it
+                    String defaultCountrNum = Utility.getCountryDialCode(this, telManager.getSimCountryIso());
+                    if(!phoneNo.startsWith(defaultCountrNum)){
+                        //If it doesn't start with a country code append it in
+                        phoneNo = defaultCountrNum + phoneNo;
+                    }
 
+                    displayName = cursor.getString(nameIndex);
+                }
                 cursor.close();
+
+                if(!fWhitelist.getWhitelistAdapater().checkDuplicate(phoneNo))
+                    fWhitelist.getWhitelistAdapater().add(new String[]{displayName, phoneNo});
+                else
+                    Toast.makeText(getApplicationContext(), "That number is already on the whitelist", Toast.LENGTH_LONG).show();
                 break;
             default:
                 break;
@@ -139,28 +212,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -170,7 +221,7 @@ public class MainActivity extends AppCompatActivity
         FragmentManager manager = getSupportFragmentManager();
         switch(id){
             case R.id.nav_whitelist:
-                manager.beginTransaction().replace(R.id.fragment_container, new WhitelistFragment())
+                manager.beginTransaction().replace(R.id.fragment_container, fWhitelist)
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .commit();
                 mFab.show();
@@ -187,6 +238,11 @@ public class MainActivity extends AppCompatActivity
                         .commit();
                 mFab.hide();
                 break;
+            case R.id.nav_settings:
+                manager.beginTransaction().replace(R.id.fragment_container, fPrefs)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .commit();
+                mFab.hide();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,21 +16,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import io.github.mimerme.whereu.R;
+import io.github.mimerme.whereu.ui.MainActivity;
+import io.github.mimerme.whereu.utility.Utility;
 
 public class WhitelistAdapater extends RecyclerView.Adapter{
 
     private ArrayList<String[]> mData;
+    private HashSet<String> mNumbers = new HashSet<>();
     private String[] mLastDeleted;
     private int mLastDeletedPosition;
 
-    public WhitelistAdapater(ArrayList<String[]> data){
-        this.mData = data;
-    }
-
     public WhitelistAdapater(){
-        this.mData = generateDummyData();
+        this.mData = loadData();
     }
 
     @Override
@@ -59,13 +60,24 @@ public class WhitelistAdapater extends RecyclerView.Adapter{
         mLastDeleted = mData.get(position);
 
         mData.remove(position);
+        mNumbers.remove(mLastDeleted[1]);
+
+        saveData();
         notifyItemRemoved(position);
         notifyItemRangeChanged(position, mData.size());
     }
 
     public void undo(){
         mData.add(mLastDeletedPosition, mLastDeleted);
+        mNumbers.add(mLastDeleted[1]);
+        saveData();
         notifyItemInserted(mLastDeletedPosition);
+    }
+
+    public void add(String newLine[]){
+        mData.add(newLine);
+        saveData();
+        notifyItemInserted(mData.size() - 1);
     }
 
     public static class EntryViewHolder extends RecyclerView.ViewHolder {
@@ -102,6 +114,37 @@ public class WhitelistAdapater extends RecyclerView.Adapter{
         test.add(new String[]{"Name 4", "911"});
         test.add(new String[]{"Name 5", "911"});
         return test;
+    }
+
+    public ArrayList<String[]> loadData(){
+        ArrayList<String[]> data = new ArrayList<>();
+
+        for(String line : MainActivity.WHITELIST_STORAGE){
+            String[] splits = line.split(":");
+            String formatedNumber = Utility.formatNumber(splits[1]);
+            data.add(new String[]{
+                    splits[0],
+                    formatedNumber
+            });
+            mNumbers.add(formatedNumber);
+        }
+
+        return data;
+    }
+
+    public void saveData(){
+        StringBuffer buffer = new StringBuffer();
+
+        for(String[] data : mData){
+            buffer.append(data[0] + ":" + data[1] + "\n");
+        }
+
+        MainActivity.WHITELIST_STORAGE.writeTo(buffer.toString());
+    }
+
+    //Checks to see if the number is already on the whitelist. True for yes, false for no.
+    public boolean checkDuplicate(String phoneNumber){
+        return mNumbers.contains(phoneNumber);
     }
 
     //Allows swipe to delete

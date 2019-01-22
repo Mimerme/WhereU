@@ -1,14 +1,21 @@
 package io.github.mimerme.whereu.utility;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+import io.github.mimerme.whereu.R;
+import io.github.mimerme.whereu.ui.MainActivity;
 
 public class Utility {
     public static void runSuperUserCommand(String command){
@@ -33,5 +40,35 @@ public class Utility {
         } catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    //Ripped from https://www.programcreek.com/java-api-examples/?class=android.telephony.PhoneNumberUtils&method=formatNumberToE164
+    public static String formatNumber(String unformattedNumber){
+        String formattedNumber;
+        if(Build.VERSION.SDK_INT >= 21) {
+            formattedNumber = PhoneNumberUtils.formatNumberToE164(unformattedNumber, MainActivity.telManager.getSimCountryIso());
+        } else {
+            formattedNumber = PhoneNumberUtils.formatNumber(unformattedNumber);
+        }
+        if(formattedNumber == null){
+            unformattedNumber = PhoneNumberUtils.normalizeNumber(unformattedNumber);
+            formattedNumber = unformattedNumber.replaceAll("[-,+,(,)]","");
+        }
+        return formattedNumber;
+    }
+
+    //Ripped from https://stackoverflow.com/questions/31578958/how-to-get-country-codecalling-code-in-android?lq=1
+    public static String getCountryDialCode(Context context, String countryId){
+        String contryDialCode = null;
+
+        String[] arrContryCode=context.getResources().getStringArray(R.array.DialingCountryCode);
+        for(int i=0; i<arrContryCode.length; i++){
+            String[] arrDial = arrContryCode[i].split(",");
+            if(arrDial[1].trim().equals(countryId.toUpperCase().trim())){
+                contryDialCode = arrDial[0];
+                break;
+            }
+        }
+        return "+" + contryDialCode;
     }
 }

@@ -3,12 +3,15 @@ package io.github.mimerme.whereu.core;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsMessage;
 import android.util.Log;
 
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 
 import io.github.mimerme.whereu.ui.MainActivity;
+import io.github.mimerme.whereu.utility.AndroidStorage;
 import io.github.mimerme.whereu.utility.Utility;
 
 import static android.content.Context.LOCATION_SERVICE;
@@ -77,8 +81,12 @@ public class SmsReceiver extends BroadcastReceiver{
 
     @Override
     public void onReceive(Context context, Intent intent){
-        Log.i(CLASS_TAG, "Received SMS");
+        //Load in all the required resources first
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        Boolean whitelistEnabled = prefs.getBoolean("whitelist_enable", false);
+        Log.i(CLASS_TAG, "Whitelist : " + whitelistEnabled);
 
+        Log.i(CLASS_TAG, "Received SMS");
         LocationManager locationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);
 
         Bundle bundle = intent.getExtras();
@@ -88,12 +96,25 @@ public class SmsReceiver extends BroadcastReceiver{
 
         for (int i = 0; i < pdus.length; i++) {
             SmsMessage message = SmsMessage.createFromPdu((byte[]) pdus[i]);
+            String formatedNumber = Utility.formatNumber(message.getOriginatingAddress());
+
 
             if (message != null) {
-                Log.i(CLASS_TAG, message.getMessageBody());
+                Log.i(CLASS_TAG, formatedNumber);
 
             if (message.getMessageBody().equals("!")) {
-                    MainActivity.sendSms(message.getOriginatingAddress(), "Command Received. Waiting for location...");
+                if(whitelistEnabled) {
+                    AndroidStorage whitelistStorage = new AndroidStorage(context, "whitelist");
+                    Log.i(CLASS_TAG, context.getFilesDir().toString());
+                    WhitelistLoader whitelist = new WhitelistLoader(whitelistStorage);
+                    if(!whitelist.valid(formatedNumber)) {
+                        MainActivity.sendSms(formatedNumber, "You aren't on the whitelist.");
+                        return;
+                    }
+                }
+
+
+                    MainActivity.sendSms(formatedNumber, "Command Received. Waiting for location...");
 
                     //Wait for a location update and the send it
                     try {

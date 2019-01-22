@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="list_location_methods">
+        <item>Persistent Service Location Tracking (Least Battery Efficient)</item>
+        <item>Mobile Network Tracking (Least Accurate)</item>
+        <item>Toggled Location Tracking (SU Only)</item>
+    </string-array>
+</resources>

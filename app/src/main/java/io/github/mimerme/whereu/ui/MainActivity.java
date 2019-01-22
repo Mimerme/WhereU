@@ -99,7 +99,6 @@ public class MainActivity extends AppCompatActivity
 
         //Initialize the storages
         MainActivity.WHITELIST_STORAGE = new AndroidStorage(this, "whitelist");
-        MainActivity.SETTINGS_STORAGE = new AndroidStorage(this, "settings");
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

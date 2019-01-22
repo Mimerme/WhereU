@@ -3,17 +3,22 @@
 
     <PreferenceCategory android:title="Core Functionality">
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="enable_whereu"
+            android:summary="Either enables or disables the background functionality of this app"
+            android:title="Enable WhereU" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="whitelist_enable"
+            android:summary="If disabled anyone can ask for your current location at any given time"
+            android:title="Enable Whitelist" />
+        <ListPreference
+            android:defaultValue="1"
+            android:entries="@array/list_location_methods"
+            android:entryValues="@array/list_location_methods"
+            android:key="location_preference"
+            android:summary="%s"
+            android:title="Method of Location Tracking" />
     </PreferenceCategory>
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="whitelist_enable"
-        android:summary="If disabled anyone can ask for your current location at any given time"
-        android:title="Enable Whitelist" />
-    <ListPreference
-        android:defaultValue="1"
-        android:entries="@array/list_location_methods"
-        android:entryValues="@array/list_location_methods"
-        android:key="location_preference"
-        android:summary="How the app should get your location"
-        android:title="Location Tracking Method" />
 </PreferenceScreen>

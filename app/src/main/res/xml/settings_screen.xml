@@ -14,11 +14,26 @@
             android:summary="If disabled anyone can ask for your current location at any given time"
             android:title="Enable Whitelist" />
         <ListPreference
-            android:defaultValue="1"
+            android:defaultValue="Permanent Background Service(Least Battery Efficient)"
             android:entries="@array/list_location_methods"
             android:entryValues="@array/list_location_methods"
             android:key="location_preference"
             android:summary="%s"
             android:title="Method of Location Tracking" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Customized Commands">
+
+        <EditTextPreference
+            android:defaultValue="Default value"
+            android:key="edit_text_preference_1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Location Request" />
+        <EditTextPreference
+            android:defaultValue="Default value"
+            android:key="edit_text_preference_1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Phone Status Request" />
     </PreferenceCategory>
 </PreferenceScreen>

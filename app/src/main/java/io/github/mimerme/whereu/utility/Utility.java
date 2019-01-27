@@ -1,21 +1,13 @@
 package io.github.mimerme.whereu.utility;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.telephony.PhoneNumberUtils;
-import android.telephony.SmsManager;
-import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 import io.github.mimerme.whereu.R;
-import io.github.mimerme.whereu.ui.MainActivity;
 
 public class Utility {
     public static void runSuperUserCommand(String command){
@@ -43,10 +35,10 @@ public class Utility {
     }
 
     //Ripped from https://www.programcreek.com/java-api-examples/?class=android.telephony.PhoneNumberUtils&method=formatNumberToE164
-    public static String formatNumber(String unformattedNumber){
+    public static String formatNumber(String unformattedNumber, String simCountryIso){
         String formattedNumber;
         if(Build.VERSION.SDK_INT >= 21) {
-            formattedNumber = PhoneNumberUtils.formatNumberToE164(unformattedNumber, MainActivity.telManager.getSimCountryIso());
+            formattedNumber = PhoneNumberUtils.formatNumberToE164(unformattedNumber, simCountryIso);
         } else {
             formattedNumber = PhoneNumberUtils.formatNumber(unformattedNumber);
         }

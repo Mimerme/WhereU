@@ -121,7 +121,8 @@ public class WhitelistAdapater extends RecyclerView.Adapter{
 
         for(String line : MainActivity.WHITELIST_STORAGE){
             String[] splits = line.split(":");
-            String formatedNumber = Utility.formatNumber(splits[1]);
+            String formatedNumber = Utility.formatNumber(splits[1],
+                    MainActivity.telManager.getSimCountryIso());
             data.add(new String[]{
                     splits[0],
                     formatedNumber

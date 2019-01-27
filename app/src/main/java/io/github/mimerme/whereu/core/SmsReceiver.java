@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsMessage;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.IOException;
@@ -95,8 +96,11 @@ public class SmsReceiver extends BroadcastReceiver{
         Object[] pdus= (Object[]) bundle.get("pdus");
 
         for (int i = 0; i < pdus.length; i++) {
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(context.TELEPHONY_SERVICE);
+
             SmsMessage message = SmsMessage.createFromPdu((byte[]) pdus[i]);
-            String formatedNumber = Utility.formatNumber(message.getOriginatingAddress());
+            String formatedNumber = Utility.formatNumber(message.getOriginatingAddress(),
+                    telephonyManager.getSimCountryIso());
 
 
             if (message != null) {

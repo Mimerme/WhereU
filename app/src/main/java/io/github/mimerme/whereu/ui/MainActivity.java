@@ -44,6 +44,7 @@ import io.github.mimerme.whereu.R;
 import io.github.mimerme.whereu.utility.AndroidStorage;
 import io.github.mimerme.whereu.utility.Storage;
 import io.github.mimerme.whereu.utility.Utility;
+import io.github.mimerme.whereu.utility.crashhandler.CrashHandler;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -93,6 +94,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(
+                "/mnt/sdcard/"));
 
         //Initialize the telephony manager to be static
         telManager = getDefaultTelephonyManager(this);
@@ -156,7 +160,7 @@ public class MainActivity extends AppCompatActivity
                     int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
                     int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                     phoneNo = cursor.getString(phoneIndex);
-                    phoneNo = Utility.formatNumber(phoneNo);
+                    phoneNo = Utility.formatNumber(phoneNo, telManager.getSimCountryIso());
                     //For consistancy's sake always include a country code if the number doesn't have it
                     String defaultCountrNum = Utility.getCountryDialCode(this, telManager.getSimCountryIso());
                     if(!phoneNo.startsWith(defaultCountrNum)){
